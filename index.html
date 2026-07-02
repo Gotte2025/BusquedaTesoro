@@ -245,6 +245,16 @@ Minimum version required to store current data is: `+i+`.
 // Estado
 // ---------------------------------------------------------------
 function randomCode(){
+  function getSessionCode() {
+    let code = localStorage.getItem("treasureSessionCode");
+
+    if (!code) {
+        code = randomCode();
+        localStorage.setItem("treasureSessionCode", code);
+    }
+
+    return code;
+}
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let s='';
   for(let i=0;i<5;i++) s += chars[Math.floor(Math.random()*chars.length)];
@@ -261,7 +271,7 @@ const DEFAULT_CLUES = [
 ];
 
 let state = {
-  sessionCode: randomCode(),
+  sessionCode: getSessionCode(),
   startNote: 'Aventureros, ¡el tesoro los espera! Sigan cada pista y busquen el próximo código QR escondido. ¡Buena suerte!',
   treasureMessage: '¡Lo lograron, exploradores! Encontraron el tesoro escondido. 🏆',
   stations: DEFAULT_CLUES.map((clue,i)=>({ id:i+1, clue })),
@@ -386,6 +396,22 @@ function renderPreparar(){
       }catch(e){ showToast('No se pudo leer ese código'); }
     };
   });
+  qs('#newSession').addEventListener('click', () => {
+
+    if (!confirm("Se generarán nuevos QR.\nLos QR impresos dejarán de funcionar.\n\n¿Continuar?"))
+        return;
+
+    state.sessionCode = randomCode();
+
+    localStorage.setItem(
+        "treasureSessionCode",
+        state.sessionCode
+    );
+
+    renderPrint();
+
+    showToast("QR regenerados");
+});
 }
 
 function renderStationsList(){
@@ -431,7 +457,9 @@ function syncConfigBox(){
   };
   box.value = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
 }
-
+<button class="btn btn-danger" id="newSession">
+    Regenerar QR
+</button>
 // ---------------------------------------------------------------
 // IMPRIMIR
 // ---------------------------------------------------------------
